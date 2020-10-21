@@ -1,10 +1,10 @@
 import torch
 import torch.nn as nn
 
-class fc1(nn.Module):
+class fc3(nn.Module):
 
     def __init__(self, num_classes=10):
-        super(fc1, self).__init__()
+        super(fc3, self).__init__()
         self.classifier = nn.Sequential(
             nn.Linear(28*28, 300),
             nn.ReLU(inplace=True),
@@ -17,5 +17,3 @@ class fc1(nn.Module):
         x = torch.flatten(x, 1)
         x = self.classifier(x)
         return x
-
-    

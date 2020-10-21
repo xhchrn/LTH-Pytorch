@@ -38,7 +38,7 @@ def main(args, ITE=0):
     if args.dataset == "mnist":
         traindataset = datasets.MNIST('../data', train=True, download=True,transform=transform)
         testdataset = datasets.MNIST('../data', train=False, transform=transform)
-        from archs.mnist import AlexNet, LeNet5, fc1, vgg, resnet
+        from archs.mnist import AlexNet, LeNet5, fc3, fc5, vgg, resnet
 
     elif args.dataset == "cifar10":
         traindataset = datasets.CIFAR10('../data', train=True, download=True,transform=transform)
@@ -69,6 +69,10 @@ def main(args, ITE=0):
     global model
     if args.arch_type == "fc1":
        model = fc1.fc1().to(device)
+    elif args.arch_type == "fc3":
+       model = fc3.fc3().to(device)
+    elif args.arch_type == "fc5":
+       model = fc5.fc5().to(device)
     elif args.arch_type == "lenet5":
         model = LeNet5.LeNet5().to(device)
     elif args.arch_type == "alexnet":
