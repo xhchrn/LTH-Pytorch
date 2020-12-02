@@ -2,6 +2,7 @@
 import argparse
 import copy
 import os
+from pickle import dump
 import sys
 import numpy as np
 from tqdm import tqdm
@@ -94,12 +95,20 @@ def main(args, ITE=0):
     model.apply(weight_init)
 
     # Copying and Saving Initial State
-    initial_state_dict = copy.deepcopy(model.state_dict())
-    utils.checkdir(f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/")
-    torch.save(model, f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/initial_state_dict_{args.prune_type}.pth.tar")
+    output_dir = args.output_dir if args.output_dir else f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/"
+    if args.initial_state_dict:
+        assert isinstance(args.initial_state_dict, str)
+        initial_state_dict = torch.load(args.initial_state_dict)
+        model.load_state_dict(initial_state_dict)
+        use_model = True
+    else:
+        initial_state_dict = copy.deepcopy(model.state_dict())
+        use_model = False
+    utils.checkdir(output_dir)
+    torch.save(model, os.path.join(output_dir, f"initial_state_dict_{args.prune_type}.pth.tar"))
 
     # Making Initial Mask
-    make_mask(model)
+    make_mask(model, use_model)
 
     # Optimizer and Loss
     optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
@@ -120,6 +129,7 @@ def main(args, ITE=0):
     all_loss = np.zeros(args.end_iter,float)
     all_accuracy = np.zeros(args.end_iter,float)
 
+    dump_dir = args.dump_dir if args.dump_dir else f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/"
 
     for _ite in range(args.start_iter, ITERATION):
         if not _ite == 0:
@@ -167,8 +177,8 @@ def main(args, ITE=0):
                 # Save Weights
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
-                    utils.checkdir(f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/")
-                    torch.save(model,f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/{_ite}_model_{args.prune_type}.pth.tar")
+                    utils.checkdir(output_dir)
+                    torch.save(model,os.path.join(output_dir, f"{_ite}_model_{args.prune_type}.pth.tar"))
 
             # Training
             loss = train(model, train_loader, optimizer, criterion)
@@ -193,18 +203,20 @@ def main(args, ITE=0):
         plt.ylabel("Loss and Accuracy") 
         plt.legend() 
         plt.grid(color="gray") 
-        utils.checkdir(f"{os.getcwd()}/plots/lt/{args.arch_type}/{args.dataset}/")
-        plt.savefig(f"{os.getcwd()}/plots/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_LossVsAccuracy_{comp1}.png", dpi=1200) 
+        plot_dir = args.plot_dir if args.plot_dir else f"{os.getcwd()}/plots/lt/{args.arch_type}/{args.dataset}/"
+        utils.checkdir(plot_dir)
+        plt.savefig(os.path.join(plot_dir, f"{args.prune_type}_LossVsAccuracy_{comp1}.png"), dpi=1200) 
         plt.close()
 
         # Dump Plot values
-        utils.checkdir(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/")
-        all_loss.dump(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_all_loss_{comp1}.dat")
-        all_accuracy.dump(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_all_accuracy_{comp1}.dat")
+        utils.checkdir(dump_dir)
+        all_loss.dump(os.path.join(dump_dir, f"{args.prune_type}_all_loss_{comp1}.dat"))
+        all_accuracy.dump(os.path.join(dump_dir, f"{args.prune_type}_all_accuracy_{comp1}.dat"))
         
         # Dumping mask
-        utils.checkdir(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/")
-        with open(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_mask_{comp1}.pkl", 'wb') as fp:
+        # utils.checkdir(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/")
+        mask_path = os.path.join(os.path.join(dump_dir, f"{args.prune_type}_mask_{comp1}.pkl"))
+        with open(mask_path, 'wb') as fp:
             pickle.dump(mask, fp)
         
         # Making variables into 0
@@ -213,9 +225,9 @@ def main(args, ITE=0):
         all_accuracy = np.zeros(args.end_iter,float)
 
     # Dumping Values for Plotting
-    utils.checkdir(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/")
-    comp.dump(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_compression.dat")
-    bestacc.dump(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_bestaccuracy.dat")
+    # utils.checkdir(f"{os.getcwd()}/dumps/lt/{args.arch_type}/{args.dataset}/")
+    comp.dump(os.path.join(dump_dir, f"{args.prune_type}_compression.dat"))
+    bestacc.dump(os.path.join(dump_dir, f"{args.prune_type}_bestaccuracy.dat"))
 
     # Plotting
     a = np.arange(args.prune_iterations)
@@ -229,8 +241,9 @@ def main(args, ITE=0):
     plt.grid(color="gray") 
     utils.checkdir(f"{os.getcwd()}/plots/lt/{args.arch_type}/{args.dataset}/")
     plt.savefig(f"{os.getcwd()}/plots/lt/{args.arch_type}/{args.dataset}/{args.prune_type}_AccuracyVsWeights.png", dpi=1200) 
-    plt.close()                    
-   
+    plt.close()
+
+
 # Function for Training
 def train(model, train_loader, optimizer, criterion):
     EPS = 1e-6
@@ -298,7 +311,7 @@ def prune_by_percentile(percent, resample=False, reinit=False,**kwargs):
         step = 0
 
 # Function to make an empty mask of the same size as the model
-def make_mask(model):
+def make_mask(model, use_model):
     global step
     global mask
     step = 0
@@ -310,7 +323,10 @@ def make_mask(model):
     for name, param in model.named_parameters(): 
         if 'weight' in name:
             tensor = param.data.cpu().numpy()
-            mask[step] = np.ones_like(tensor)
+            if use_model:
+                mask[step] = (tensor != 0.0).astype(tensor.dtype)
+            else:
+                mask[step] = np.ones_like(tensor)
             step = step + 1
     step = 0
 
@@ -417,6 +433,7 @@ if __name__=="__main__":
     parser.add_argument("--arch_type", default="fc1", type=str, help="fc1 | lenet5 | alexnet | vgg16 | resnet18 | densenet121")
     parser.add_argument("--prune_percent", default=10, type=int, help="Pruning percent")
     parser.add_argument("--prune_iterations", default=35, type=int, help="Pruning iterations count")
+    parser.add_argument('--initial_state_dict', type=str, default=None, help='Start from a specified state_dict')
 
     
     args = parser.parse_args()
