@@ -434,8 +434,10 @@ if __name__=="__main__":
     parser.add_argument("--prune_percent", default=10, type=int, help="Pruning percent")
     parser.add_argument("--prune_iterations", default=35, type=int, help="Pruning iterations count")
     parser.add_argument('--initial_state_dict', type=str, default=None, help='Start from a specified state_dict')
+    parser.add_argument('--output_dir', type=str, default=None, help='output dir')
+    parser.add_argument('--plot_dir', type=str, default=None, help='plot dir')
+    parser.add_argument('--dump_dir', type=str, default=None, help='dump dir')
 
-    
     args = parser.parse_args()
 
 
