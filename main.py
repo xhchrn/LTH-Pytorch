@@ -57,7 +57,7 @@ def main(args, ITE=0):
         traindataset = datasets.CIFAR100('../data', train=True, download=True,transform=transform)
         testdataset = datasets.CIFAR100('../data', train=False, transform=transform)   
         from archs.cifar100 import AlexNet, fc1, LeNet5, vgg, resnet  
-    
+
     # If you want to add extra datasets paste here
 
     else:
@@ -67,7 +67,7 @@ def main(args, ITE=0):
     train_loader = torch.utils.data.DataLoader(traindataset, batch_size=args.batch_size, shuffle=True, num_workers=0,drop_last=False)
     #train_loader = cycle(train_loader)
     test_loader = torch.utils.data.DataLoader(testdataset, batch_size=args.batch_size, shuffle=False, num_workers=0,drop_last=True)
-    
+
     # Importing Network Architecture
     global model
     if args.arch_type == "fc1":
@@ -105,7 +105,7 @@ def main(args, ITE=0):
         initial_state_dict = copy.deepcopy(model.state_dict())
         use_model = False
     utils.checkdir(output_dir)
-    torch.save(model, os.path.join(output_dir, f"initial_state_dict_{args.prune_type}.pth.tar"))
+    torch.save(model.state_dict(), os.path.join(output_dir, f"initial_state_dict_{args.prune_type}.pth.tar"))
 
     # Making Initial Mask
     make_mask(model, use_model)
@@ -178,7 +178,7 @@ def main(args, ITE=0):
                 if accuracy > best_accuracy:
                     best_accuracy = accuracy
                     utils.checkdir(output_dir)
-                    torch.save(model,os.path.join(output_dir, f"{_ite}_model_{args.prune_type}.pth.tar"))
+                    torch.save(model.state_dict(), os.path.join(output_dir, f"{_ite}_model_{args.prune_type}.pth.tar"))
 
             # Training
             loss = train(model, train_loader, optimizer, criterion)
@@ -246,7 +246,7 @@ def main(args, ITE=0):
 
 # Function for Training
 def train(model, train_loader, optimizer, criterion):
-    EPS = 1e-6
+    EPS = 1e-10
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model.train()
     for batch_idx, (imgs, targets) in enumerate(train_loader):
@@ -262,7 +262,7 @@ def train(model, train_loader, optimizer, criterion):
             if 'weight' in name:
                 tensor = p.data.cpu().numpy()
                 grad_tensor = p.grad.data.cpu().numpy()
-                grad_tensor = np.where(tensor < EPS, 0, grad_tensor)
+                grad_tensor = np.where(np.abs(tensor) < EPS, 0, grad_tensor)
                 p.grad.data = torch.from_numpy(grad_tensor).to(device)
         optimizer.step()
     return train_loss.item()
