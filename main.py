@@ -111,7 +111,8 @@ def main(args, ITE=0):
     make_mask(model, use_model)
 
     # Optimizer and Loss
-    optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
+    # optimizer = torch.optim.Adam(model.parameters(), weight_decay=args.weight_decay)
+    optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
     criterion = nn.CrossEntropyLoss() # Default was F.nll_loss
 
     # Layer Looper
@@ -160,7 +161,8 @@ def main(args, ITE=0):
                 step = 0
             else:
                 original_initialization(mask, initial_state_dict)
-            optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+            # optimizer = torch.optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+            optimizer = torch.optim.SGD(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
         print(f"\n--- Pruning Level [{ITE}:{_ite}/{ITERATION}]: ---")
 
         # Print the table of Nonzeros in each layer
