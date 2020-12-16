@@ -103,6 +103,7 @@ def main(args, ITE=0):
         initial_state_dict = torch.load(args.initial_state_dict)
         model.load_state_dict(initial_state_dict)
         use_model = True
+        print('Loaded initial state dict from {}'.format(args.initial_state_dict))
     else:
         initial_state_dict = copy.deepcopy(model.state_dict())
         use_model = False
