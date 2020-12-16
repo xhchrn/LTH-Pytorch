@@ -285,7 +285,7 @@ def test(model, test_loader, criterion):
     return accuracy
 
 # Prune by Percentile module
-def prune_by_percentile(percent, resample=False, reinit=False,**kwargs):
+def prune_by_percentile(percent, resample=False, reinit=False, num_class=10, **kwargs):
         global step
         global mask
         global model
@@ -298,7 +298,8 @@ def prune_by_percentile(percent, resample=False, reinit=False,**kwargs):
             if 'weight' in name:
                 tensor = param.data.cpu().numpy()
                 alive = tensor[np.nonzero(tensor)] # flattened array of nonzero values
-                percentile_value = np.percentile(abs(alive), percent)
+                scale = 2 if tensor.shape[0] == num_class else 1
+                percentile_value = np.percentile(abs(alive), percent / scale)
 
                 # Convert Tensors to numpy and calculate
                 weight_dev = param.device
