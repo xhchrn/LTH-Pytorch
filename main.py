@@ -100,7 +100,7 @@ def main(args, ITE=0):
     output_dir = args.output_dir if args.output_dir else f"{os.getcwd()}/saves/{args.arch_type}/{args.dataset}/"
     if args.initial_state_dict:
         assert isinstance(args.initial_state_dict, str)
-        initial_state_dict = torch.load(args.initial_state_dict)
+        initial_state_dict = torch.load(args.initial_state_dict, map_location='cpu`')
         model.load_state_dict(initial_state_dict)
         use_model = True
         print('Loaded initial state dict from {}'.format(args.initial_state_dict))

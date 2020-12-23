@@ -100,15 +100,34 @@ python3 main.py --lr 1e-3 --weight_decay 0.0 --batch_size 128 --prune_type=lt --
     --plot_dir   "random_pruning_exp_outputs/mlp5_mnist_grasp_pai_untrained/plots" \
     --dump_dir   "random_pruning_exp_outputs/mlp5_mnist_grasp_pai_untrained/dumps"
 
-for alpha in 0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00
-    for SEED in {1..5}
-    do
         # python3 main.py --lr 1e-3 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=fc5 --dataset=mnist --prune_percent=0 --prune_iterations=1 --end_iter 20 \
-        python3 main.py --lr 0.1 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=lenet_300_100 --dataset=mnist --prune_percent=20 --prune_iterations=20 --end_iter 40 \
+for alpha in 0.00 0.05 0.10 0.15 0.20 0.25 0.30 0.35 0.40 0.45 0.50 0.55 0.60 0.65 0.70 0.75 0.80 0.85 0.90 0.95 1.00; do
+    for SEED in {1..5}; do
+        python3 main.py --lr 0.1 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=lenet_300_100 --dataset=mnist --prune_percent=0 --prune_iterations=1 --end_iter 40 \
             --gpu 0 \
             --initial_state_dict "random_pruning_alpha_exp_state_dict_files/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained.pth.tar" \
             --output_dir         "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/saves" \
             --plot_dir           "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/plots" \
             --dump_dir           "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/dumps"
     done
+done
+
+for alpha in 0.75 0.80 0.85 0.90 0.95 1.00; do
+    for SEED in {1..5}; do
+        python3 main.py --lr 0.1 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=lenet_300_100 --dataset=mnist --prune_percent=0 --prune_iterations=1 --end_iter 40 \
+            --gpu 1 \
+            --initial_state_dict "random_pruning_alpha_exp_state_dict_files/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained.pth.tar" \
+            --output_dir         "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/saves" \
+            --plot_dir           "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/plots" \
+            --dump_dir           "random_pruning_alpha_exp_outputs/lenet_mnist_rp_alpha${alpha}_seed${SEED}_untrained/dumps"
+    done
+done
+
+for prune_method in synflow grasp snip mag; do
+    python3 main.py --lr 0.1 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=lenet_300_100 --dataset=mnist --prune_percent=0 --prune_iterations=1 --end_iter 40 \
+        --gpu 1 \
+        --initial_state_dict "lenet_mnist_pai_${prune_method}_untrained.pth.tar" \
+        --output_dir         "pai_exp_outputs/lenet_mnist_pai_${prune_method}_untrained/saves" \
+        --plot_dir           "pai_exp_outputs/lenet_mnist_pai_${prune_method}_untrained/plots" \
+        --dump_dir           "pai_exp_outputs/lenet_mnist_pai_${prune_method}_untrained/dumps"
 done
