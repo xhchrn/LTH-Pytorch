@@ -125,7 +125,7 @@ done
 
 for prune_method in synflow grasp snip mag; do
     python3 main.py --lr 0.1 --weight_decay 0.0 --batch_size 128 --prune_type=lt --arch_type=lenet_300_100 --dataset=mnist --prune_percent=0 --prune_iterations=1 --end_iter 40 \
-        --gpu 1 \
+        --gpu 0 \
         --initial_state_dict "lenet_mnist_pai_${prune_method}_untrained.pth.tar" \
         --output_dir         "pai_exp_outputs/lenet_mnist_pai_${prune_method}_untrained/saves" \
         --plot_dir           "pai_exp_outputs/lenet_mnist_pai_${prune_method}_untrained/plots" \
